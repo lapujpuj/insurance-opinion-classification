@@ -1,18 +1,26 @@
 import streamlit as st
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from peft import PeftModel
 import torch
 
 # --- Charger le modèle et le tokenizer ---
 @st.cache_resource
 def load_model():
-    # Remplacez par le chemin de votre modèle sur Hugging Face
-    model_name = "pujpuj/roberta-lora-token-classification"
-    base_model_name = "roberta-large"
-    
-    # Charger le modèle et le tokenizer
+    # Charger le modèle de base depuis Hugging Face
+    base_model_name = "roberta-large"  # Modèle de base
+    adapter_model_name = "pujpuj/roberta-lora-token-classification"  # Votre dépôt avec LoRA
+
+    # Charger le tokenizer
     tokenizer = AutoTokenizer.from_pretrained(base_model_name)
-    model = AutoModelForSequenceClassification.from_pretrained(model_name)
+
+    # Charger le modèle de base
+    base_model = AutoModelForSequenceClassification.from_pretrained(base_model_name, num_labels=5)
+
+    # Appliquer les adaptateurs LoRA au modèle de base
+    model = PeftModel.from_pretrained(base_model, adapter_model_name)
+
     return model, tokenizer
+
 
 model, tokenizer = load_model()
 
