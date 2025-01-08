@@ -6,7 +6,7 @@ import torch
 @st.cache_resource
 def load_model():
     # Remplacez par le chemin de votre modèle sur Hugging Face
-    model_name = "lapujpuj/roberta-lora-token-classification"
+    model_name = "lapujpuj/roberta-lora-insurance-opinion-classification"
     base_model_name = "roberta-large"
     
     # Charger le modèle et le tokenizer
