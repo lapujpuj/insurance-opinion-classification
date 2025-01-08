@@ -3,20 +3,20 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from peft import PeftModel
 import torch
 
-# --- Charger le modèle et le tokenizer ---
+# --- Load model and tokenizer ---
 @st.cache_resource
 def load_model():
-    # Charger le modèle de base depuis Hugging Face
-    base_model_name = "roberta-large"  # Modèle de base
-    adapter_model_name = "pujpuj/roberta-lora-token-classification"  # Votre dépôt avec LoRA
+    # Load the base model from Hugging Face
+    base_model_name = "roberta-large"  # Base model
+    adapter_model_name = "pujpuj/roberta-lora-token-classification"  # Your repo with LoRA
 
-    # Charger le tokenizer
+    # Load the tokenizer
     tokenizer = AutoTokenizer.from_pretrained(base_model_name)
 
-    # Charger le modèle de base
+    # Load the base model
     base_model = AutoModelForSequenceClassification.from_pretrained(base_model_name, num_labels=5)
 
-    # Appliquer les adaptateurs LoRA au modèle de base
+    # Apply LoRA adapters to the base model
     model = PeftModel.from_pretrained(base_model, adapter_model_name)
 
     return model, tokenizer
@@ -24,17 +24,17 @@ def load_model():
 
 model, tokenizer = load_model()
 
-# --- Interface Streamlit ---
-st.title("Prédiction de Note")
-st.write("Entrez un avis ci-dessous pour prédire sa note.")
+# --- Streamlit Interface ---
+st.title("Prediction of Rating")
+st.write("Enter a review below to predict its rating.")
 
-# Entrée utilisateur
-text = st.text_area("Avis :", "")
+# User input
+text = st.text_area("Review:", "")
 
-# Bouton pour prédire
-if st.button("Prédire"):
+# Button for prediction
+if st.button("Predict"):
     if text.strip() != "":
-        # Tokenisation
+        # Tokenization
         inputs = tokenizer(
             text,
             padding=True,
@@ -43,15 +43,14 @@ if st.button("Prédire"):
             return_tensors="pt"
         )
         
-        # Prédiction
+        # Prediction
         model.eval()
         with torch.no_grad():
             outputs = model(**inputs)
             logits = outputs.logits
             predicted_label = torch.argmax(logits, dim=1).item() + 1
 
-        # Afficher le résultat
-        st.write(f"**Note prédite : {predicted_label}**")
+        # Display result
+        st.write(f"**Predicted rating: {predicted_label}**")
     else:
-        st.write("Veuillez entrer un avis.")
-
+        st.write("Please enter a review.")
