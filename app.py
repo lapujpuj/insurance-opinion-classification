@@ -48,7 +48,7 @@ if st.button("Prédire"):
         with torch.no_grad():
             outputs = model(**inputs)
             logits = outputs.logits
-            predicted_label = torch.argmax(logits, dim=1).item()
+            predicted_label = torch.argmax(logits, dim=1).item() + 1
 
         # Afficher le résultat
         st.write(f"**Note prédite : {predicted_label}**")
