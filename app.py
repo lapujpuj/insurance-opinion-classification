@@ -2,31 +2,122 @@ import streamlit as st
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from peft import PeftModel
 import torch
+import re
+from nltk.corpus import stopwords
+from nltk.tokenize import TreebankWordTokenizer
+from nltk.stem import WordNetLemmatizer
+from spellchecker import SpellChecker
+from huggingface_hub import login
+
+# --- Preprocessing Components ---
+STOP_WORDS = set(stopwords.words('english'))
+TOKENIZER = TreebankWordTokenizer()
+REGEX = re.compile(r'http\S+|www\S+|https\S+|<[^>]+>')  # To remove URLs and HTML tags
+EMOJI_PATTERN = re.compile("["
+                           u"\U0001F600-\U0001F64F"  # emoticons
+                           u"\U0001F300-\U0001F5FF"  # symbols & pictographs
+                           u"\U0001F680-\U0001F6FF"  # transport & map symbols
+                           u"\U0001F1E0-\U0001F1FF"  # flags
+                           "]+", flags=re.UNICODE)
+LEMMATIZER = WordNetLemmatizer()
+SPELL = SpellChecker()
+REGEX_NON_ALPHANUM = re.compile(r'[^a-zA-Z\s]')  # Remove non-alphabetic characters
+
+# Function to expand contractions
+def expand_contractions(text):
+    contractions_dict = {
+        "can't": "cannot",
+        "won't": "will not",
+        "n't": " not",
+        "'re": " are",
+        "'s": " is",
+        "'d": " would",
+        "'ll": " will",
+        "'t": " not",
+        "'ve": " have",
+        "'m": " am"
+    }
+    pattern = re.compile('({})'.format('|'.join(contractions_dict.keys())), flags=re.IGNORECASE | re.DOTALL)
+
+    def replace(match):
+        return contractions_dict.get(match.group(0).lower(), match.group(0))
+
+    return pattern.sub(replace, text)
+
+# Function to correct spelling
+def correct_spelling(tokens):
+    corrected_tokens = []
+    misspelled = SPELL.unknown(tokens)
+    for word in tokens:
+        if word in misspelled:
+            corrected = SPELL.correction(word)
+            if corrected:
+                corrected_tokens.append(corrected)
+            else:
+                corrected_tokens.append(word)
+        else:
+            corrected_tokens.append(word)
+    return corrected_tokens
+
+# Function to clean and tokenize text
+def clean_and_tokenize(text):
+    text = REGEX.sub('', text)  # Remove URLs and HTML tags
+    text = EMOJI_PATTERN.sub('', text)  # Remove emojis
+    text = expand_contractions(text)  # Expand contractions
+    text = REGEX_NON_ALPHANUM.sub(' ', text)  # Remove non-alphabetic characters
+    text = text.lower()  # Convert to lowercase
+    tokens = TOKENIZER.tokenize(text)  # Tokenize
+    tokens = [word for word in tokens if word not in STOP_WORDS and len(word) > 1]  # Remove stop words
+    tokens = correct_spelling(tokens)  # Correct spelling
+    tokens = [LEMMATIZER.lemmatize(word) for word in tokens]  # Lemmatization
+    return tokens
 
 # --- Load model and tokenizer ---
+# @st.cache_resource
+# def load_model():
+#     base_model_name = "roberta-large"  # Base model
+#     adapter_model_name = "pujpuj/roberta-lora-token-classification"  # Your repo with LoRA
+
+#     tokenizer = AutoTokenizer.from_pretrained(base_model_name)  # Load tokenizer
+#     base_model = AutoModelForSequenceClassification.from_pretrained(base_model_name, num_labels=5)  # Load base model
+#     model = PeftModel.from_pretrained(base_model, adapter_model_name)  # Load LoRA adapters
+#     return model, tokenizer
+
+# Authenticate with Hugging Face
+token = "the token"
+login(token=token)
+
 @st.cache_resource
 def load_model():
-    # Load the base model from Hugging Face
-    base_model_name = "roberta-large"  # Base model
-    adapter_model_name = "pujpuj/roberta-lora-token-classification"  # Your repo with LoRA
+    # Updated base model and adapter model
+    base_model_name = "meta-llama/Llama-3.2-1B"  # Base LLaMA model
+    adapter_model_name = "ahmedmaaloul/insurance-opinion-classification-llama-3.2-1b-LoRa"  # Hugging Face repo
 
-    # Load the tokenizer
-    tokenizer = AutoTokenizer.from_pretrained(base_model_name)
+    # Load tokenizer
+    tokenizer = AutoTokenizer.from_pretrained(base_model_name, add_prefix_space=True)
+    tokenizer.pad_token_id = tokenizer.eos_token_id
+    tokenizer.pad_token = tokenizer.eos_token
 
-    # Load the base model
+    # Load base model
     base_model = AutoModelForSequenceClassification.from_pretrained(base_model_name, num_labels=5)
 
-    # Apply LoRA adapters to the base model
+    # Set the pad token id on the base model config
+    base_model.config.pad_token_id = tokenizer.pad_token_id
+
+
+    # Load LoRA adapter from Hugging Face Hub
     model = PeftModel.from_pretrained(base_model, adapter_model_name)
 
     return model, tokenizer
 
 
+
+
 model, tokenizer = load_model()
 
 # --- Streamlit Interface ---
-st.title("Prediction of Rating")
-st.write("Enter a review below to predict its rating.")
+st.title("Prediction of Insurance Review Rating")
+st.write("Enter an insurance review below to predict its rating.")
 
 # User input
 text = st.text_area("Review:", "")
@@ -34,9 +125,13 @@ text = st.text_area("Review:", "")
 # Button for prediction
 if st.button("Predict"):
     if text.strip() != "":
+        # Preprocess the input
+        tokens = clean_and_tokenize(text)
+        cleaned_text = " ".join(tokens)  # Reconstruct the cleaned text
+        
         # Tokenization
         inputs = tokenizer(
-            text,
+            cleaned_text,
             padding=True,
             truncation=True,
             max_length=512,
@@ -51,6 +146,7 @@ if st.button("Predict"):
             predicted_label = torch.argmax(logits, dim=1).item() + 1
 
         # Display result
-        st.write(f"**Predicted rating: {predicted_label}**")
+        st.write(f"**Cleaned Review:** {cleaned_text}")
+        st.write(f"**Predicted Rating:** {predicted_label}")
     else:
         st.write("Please enter a review.")
