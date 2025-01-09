@@ -94,6 +94,8 @@ def clean_and_tokenize(text):
 token = os.getenv("HF_TOKEN")  # Fetch the token from the environment
 login(token=token)
 
+print(token)
+
 # @st.cache_resource
 # def load_model():
 # Updated base model and adapter model
