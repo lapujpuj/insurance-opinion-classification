@@ -2,3 +2,6 @@ streamlit
 torch
 transformers
 peft
+spellchecker
+nltk
+huggingface_hub
