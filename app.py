@@ -1,13 +1,17 @@
 import streamlit as st
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
-from peft import PeftModel
-import torch
+# from transformers import AutoTokenizer, AutoModelForSequenceClassification
+# from peft import PeftModel
+# import torch
 import re
-
+from tensorflow.keras.models import load_model
+from tensorflow.keras.preprocessing.text import tokenizer_from_json
+from tensorflow.keras.preprocessing.sequence import pad_sequences
 import nltk
 from spellchecker import SpellChecker
-from huggingface_hub import login
-import os
+import json
+import numpy as np
+# from huggingface_hub import login
+# import os
 
 # Download necessary NLTK data
 nltk.download('stopwords')
@@ -81,7 +85,7 @@ def clean_and_tokenize(text):
     tokens = [LEMMATIZER.lemmatize(word) for word in tokens]  # Lemmatization
     return tokens
 
-# --- Load model and tokenizer ---
+# --- Load model and tokenizer for Roberta ---
 # @st.cache_resource
 # def load_model():
 #     base_model_name = "roberta-large"  # Base model
@@ -92,38 +96,55 @@ def clean_and_tokenize(text):
 #     model = PeftModel.from_pretrained(base_model, adapter_model_name)  # Load LoRA adapters
 #     return model, tokenizer
 
-# Authenticate with Hugging Face
-token = os.getenv("HF_TOKEN")  # Fetch the token from the environment
-login(token=token)
+
+# # --- Load model and tokenizer for Llama 3.2 1B ---
+# # Authenticate with Hugging Face
+# token = os.getenv("HF_TOKEN")  # Fetch the token from the environment
+# login(token=token)
 
 
 # @st.cache_resource
 # def load_model():
-# Updated base model and adapter model
-base_model_name = "meta-llama/Llama-3.2-1B"  # Base LLaMA model
-adapter_model_name = "ahmedmaaloul/insurance-opinion-classification-llama-3.2-1b-LoRa"  # Hugging Face repo
+#     # Updated base model and adapter model
+#     base_model_name = "meta-llama/Llama-3.2-1B"  # Base LLaMA model
+#     adapter_model_name = "ahmedmaaloul/insurance-opinion-classification-llama-3.2-1b-LoRa"  # Hugging Face repo
 
-# Load tokenizer
-tokenizer = AutoTokenizer.from_pretrained(base_model_name, add_prefix_space=True)
-tokenizer.pad_token_id = tokenizer.eos_token_id
-tokenizer.pad_token = tokenizer.eos_token
+#     # Load tokenizer
+#     tokenizer = AutoTokenizer.from_pretrained(base_model_name, add_prefix_space=True)
+#     tokenizer.pad_token_id = tokenizer.eos_token_id
+#     tokenizer.pad_token = tokenizer.eos_token
 
-# Load base model
-base_model = AutoModelForSequenceClassification.from_pretrained(base_model_name, num_labels=5)
+#     # Load base model
+#     base_model = AutoModelForSequenceClassification.from_pretrained(base_model_name, num_labels=5)
 
-# Set the pad token id on the base model config
-base_model.config.pad_token_id = tokenizer.pad_token_id
-
-
-# Load LoRA adapter from Hugging Face Hub
-model = PeftModel.from_pretrained(base_model, adapter_model_name)
-
-#     return model, tokenizer
+#     # Set the pad token id on the base model config
+#     base_model.config.pad_token_id = tokenizer.pad_token_id
 
 
+#     # Load LoRA adapter from Hugging Face Hub
+#     model = PeftModel.from_pretrained(base_model, adapter_model_name)
 
+#      return model, tokenizer
 
 # model, tokenizer = load_model()
+
+
+@st.cache_resource
+def load_model_and_tokenizer():
+    """
+    Load the trained TensorFlow model and tokenizer.
+    """
+    # Load the saved model
+    model = load_model('saved_model/Basic_Embedding_NN.h5')
+    
+    # Load the tokenizer
+    with open('saved_model/tokenizer.json') as f:
+        tokenizer_json = json.load(f)
+    tokenizer = tokenizer_from_json(tokenizer_json)
+    
+    return model, tokenizer
+
+model, tokenizer = load_model_and_tokenizer()
 
 # --- Streamlit Interface ---
 st.title("Prediction of Insurance Review Rating")
@@ -132,31 +153,47 @@ st.write("Enter an insurance review below to predict its rating.")
 # User input
 text = st.text_area("Review:", "")
 
-# Button for prediction
+# # Button for prediction
+# if st.button("Predict"):
+#     if text.strip() != "":
+#         # Preprocess the input
+#         tokens = clean_and_tokenize(text)
+#         cleaned_text = " ".join(tokens)  # Reconstruct the cleaned text
+        
+#         # Tokenization
+#         inputs = tokenizer(
+#             cleaned_text,
+#             padding=True,
+#             truncation=True,
+#             max_length=512,
+#             return_tensors="pt"
+#         )
+        
+#         # Prediction
+#         model.eval()
+#         with torch.no_grad():
+#             outputs = model(**inputs)
+#             logits = outputs.logits
+#             predicted_label = torch.argmax(logits, dim=1).item() + 1
+
+#         # Display result
+#         st.write(f"**Cleaned Review:** {cleaned_text}")
+#         st.write(f"**Predicted Rating:** {predicted_label}")
+#     else:
+#         st.write("Please enter a review.")
+
+# Button to predict
 if st.button("Predict"):
-    if text.strip() != "":
-        # Preprocess the input
-        tokens = clean_and_tokenize(text)
-        cleaned_text = " ".join(tokens)  # Reconstruct the cleaned text
-        
-        # Tokenization
-        inputs = tokenizer(
-            cleaned_text,
-            padding=True,
-            truncation=True,
-            max_length=512,
-            return_tensors="pt"
-        )
-        
-        # Prediction
-        model.eval()
-        with torch.no_grad():
-            outputs = model(**inputs)
-            logits = outputs.logits
-            predicted_label = torch.argmax(logits, dim=1).item() + 1
+    if text.strip():  # Check if input text is not empty
+        # Preprocess user input
+        seq = tokenizer.texts_to_sequences([text])  # Tokenize the input text
+        padded_seq = pad_sequences(seq, maxlen=100, padding='post')  # Pad the sequence
+
+        # Make prediction
+        prediction = model.predict(padded_seq)  # Predict using the model
+        predicted_class = np.argmax(prediction, axis=1)[0]  # Get the predicted class index
 
         # Display result
-        st.write(f"**Cleaned Review:** {cleaned_text}")
-        st.write(f"**Predicted Rating:** {predicted_label}")
+        st.write(f"Predicted Class: {predicted_class}")
     else:
-        st.write("Please enter a review.")
+        st.write("Please enter text to classify.")

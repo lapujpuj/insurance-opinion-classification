@@ -1,8 +1,11 @@
 streamlit
-torch
-transformers
-peft
+# torch
+# transformers
+# peft
+tensorflow
 gensim
 pyspellchecker
 nltk
-huggingface_hub
+json
+numpy
+# huggingface_hub
