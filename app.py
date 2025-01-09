@@ -3,9 +3,7 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from peft import PeftModel
 import torch
 import re
-from nltk.corpus import stopwords
-from nltk.tokenize import TreebankWordTokenizer
-from nltk.stem import WordNetLemmatizer
+
 import nltk
 from spellchecker import SpellChecker
 from huggingface_hub import login
@@ -15,6 +13,10 @@ import os
 nltk.download('stopwords')
 nltk.download('wordnet')
 nltk.download('omw-1.4')
+
+from nltk.corpus import stopwords
+from nltk.tokenize import TreebankWordTokenizer
+from nltk.stem import WordNetLemmatizer
 
 # --- Preprocessing Components ---
 STOP_WORDS = set(stopwords.words('english'))
@@ -94,7 +96,6 @@ def clean_and_tokenize(text):
 token = os.getenv("HF_TOKEN")  # Fetch the token from the environment
 login(token=token)
 
-print(token)
 
 # @st.cache_resource
 # def load_model():
