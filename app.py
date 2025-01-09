@@ -13,6 +13,21 @@ import numpy as np
 # from huggingface_hub import login
 # import os
 
+
+# # by the way might imply add library to requirement
+# streamlit
+# # torch
+# # transformers
+# # peft
+# tensorflow
+# gensim
+# pyspellchecker
+# nltk
+# json
+# numpy
+# # huggingface_hub
+
+
 # Download necessary NLTK data
 nltk.download('stopwords')
 nltk.download('wordnet')
