@@ -2,6 +2,7 @@ streamlit
 torch
 transformers
 peft
-spellchecker
+gensim
+pyspellchecker
 nltk
 huggingface_hub
