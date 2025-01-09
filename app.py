@@ -6,9 +6,15 @@ import re
 from nltk.corpus import stopwords
 from nltk.tokenize import TreebankWordTokenizer
 from nltk.stem import WordNetLemmatizer
+import nltk
 from spellchecker import SpellChecker
 from huggingface_hub import login
 import os
+
+# Download necessary NLTK data
+nltk.download('stopwords')
+nltk.download('wordnet')
+nltk.download('omw-1.4')
 
 # --- Preprocessing Components ---
 STOP_WORDS = set(stopwords.words('english'))
