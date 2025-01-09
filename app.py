@@ -8,6 +8,7 @@ from nltk.tokenize import TreebankWordTokenizer
 from nltk.stem import WordNetLemmatizer
 from spellchecker import SpellChecker
 from huggingface_hub import login
+import os
 
 # --- Preprocessing Components ---
 STOP_WORDS = set(stopwords.words('english'))
@@ -84,7 +85,7 @@ def clean_and_tokenize(text):
 #     return model, tokenizer
 
 # Authenticate with Hugging Face
-token = "the token"
+token = os.getenv("HF_TOKEN")  # Fetch the token from the environment
 login(token=token)
 
 @st.cache_resource
