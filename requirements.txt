@@ -3,5 +3,4 @@ tensorflow
 gensim
 pyspellchecker
 nltk
-json
 numpy
