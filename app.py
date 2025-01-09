@@ -94,33 +94,33 @@ def clean_and_tokenize(text):
 token = os.getenv("HF_TOKEN")  # Fetch the token from the environment
 login(token=token)
 
-@st.cache_resource
-def load_model():
-    # Updated base model and adapter model
-    base_model_name = "meta-llama/Llama-3.2-1B"  # Base LLaMA model
-    adapter_model_name = "ahmedmaaloul/insurance-opinion-classification-llama-3.2-1b-LoRa"  # Hugging Face repo
+# @st.cache_resource
+# def load_model():
+# Updated base model and adapter model
+base_model_name = "meta-llama/Llama-3.2-1B"  # Base LLaMA model
+adapter_model_name = "ahmedmaaloul/insurance-opinion-classification-llama-3.2-1b-LoRa"  # Hugging Face repo
 
-    # Load tokenizer
-    tokenizer = AutoTokenizer.from_pretrained(base_model_name, add_prefix_space=True)
-    tokenizer.pad_token_id = tokenizer.eos_token_id
-    tokenizer.pad_token = tokenizer.eos_token
+# Load tokenizer
+tokenizer = AutoTokenizer.from_pretrained(base_model_name, add_prefix_space=True)
+tokenizer.pad_token_id = tokenizer.eos_token_id
+tokenizer.pad_token = tokenizer.eos_token
 
-    # Load base model
-    base_model = AutoModelForSequenceClassification.from_pretrained(base_model_name, num_labels=5)
+# Load base model
+base_model = AutoModelForSequenceClassification.from_pretrained(base_model_name, num_labels=5)
 
-    # Set the pad token id on the base model config
-    base_model.config.pad_token_id = tokenizer.pad_token_id
-
-
-    # Load LoRA adapter from Hugging Face Hub
-    model = PeftModel.from_pretrained(base_model, adapter_model_name)
-
-    return model, tokenizer
+# Set the pad token id on the base model config
+base_model.config.pad_token_id = tokenizer.pad_token_id
 
 
+# Load LoRA adapter from Hugging Face Hub
+model = PeftModel.from_pretrained(base_model, adapter_model_name)
+
+#     return model, tokenizer
 
 
-model, tokenizer = load_model()
+
+
+# model, tokenizer = load_model()
 
 # --- Streamlit Interface ---
 st.title("Prediction of Insurance Review Rating")
