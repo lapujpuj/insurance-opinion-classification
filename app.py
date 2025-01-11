@@ -10,6 +10,8 @@ import nltk
 from spellchecker import SpellChecker
 import json
 import numpy as np
+from streamlit.components.v1 import iframe
+import os
 # from huggingface_hub import login
 # import os
 
@@ -197,18 +199,32 @@ text = st.text_area("Review:", "")
 #     else:
 #         st.write("Please enter a review.")
 
-# Button to predict
-if st.button("Predict"):
-    if text.strip():  # Check if input text is not empty
-        # Preprocess user input
-        seq = tokenizer.texts_to_sequences([text])  # Tokenize the input text
-        padded_seq = pad_sequences(seq, maxlen=100, padding='post')  # Pad the sequence
+# Répertoire contenant les fichiers TensorBoard
+projector_log_dir = "projector"  # Changez le chemin si nécessaire
 
-        # Make prediction
-        prediction = model.predict(padded_seq)  # Predict using the model
-        predicted_class = np.argmax(prediction, axis=1)[0]  # Get the predicted class index
+# Vérifiez si les fichiers nécessaires existent
+if not os.path.exists(projector_log_dir):
+    st.error(f"Le répertoire {projector_log_dir} n'existe pas. Veuillez vérifier les fichiers TensorBoard.")
+else:
+    # Lancement de TensorBoard si ce n'est pas déjà actif
+    tensorboard_command = f"tensorboard --logdir {projector_log_dir} --host=0.0.0.0 --port=6006"
+    os.system(tensorboard_command)  # Lance TensorBoard sur localhost:6006
 
-        # Display result
-        st.write(f"Predicted Class: {predicted_class}")
-    else:
-        st.write("Please enter text to classify.")
+    # Interface principale Streamlit
+    st.title("Prediction of Insurance Review Rating")
+    st.write("Enter an insurance review below to predict its rating.")
+
+    # Zone de texte pour l'utilisateur
+    text = st.text_area("Review:", "")
+
+    # Bouton pour la prédiction
+    if st.button("Predict"):
+        if text.strip():
+            st.write(f"Votre texte : {text}")
+            st.write("Prédiction : [à intégrer avec votre modèle]")
+        else:
+            st.write("Veuillez entrer un texte à analyser.")
+
+    # Affichage de TensorBoard
+    st.subheader("Embedding Visualization via TensorBoard")
+    iframe("http://localhost:6006", height=800, scrolling=True)
