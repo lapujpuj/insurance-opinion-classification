@@ -3,6 +3,7 @@ import streamlit as st
 # from peft import PeftModel
 # import torch
 import re
+import shap
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.text import tokenizer_from_json
 from tensorflow.keras.preprocessing.sequence import pad_sequences
@@ -12,6 +13,7 @@ import json
 import numpy as np
 from streamlit.components.v1 import iframe
 import os
+import matplotlib.pyplot as plt
 # from huggingface_hub import login
 # import os
 
@@ -202,29 +204,70 @@ text = st.text_area("Review:", "")
 # Répertoire contenant les fichiers TensorBoard
 projector_log_dir = "projector"  # Changez le chemin si nécessaire
 
-# Vérifiez si les fichiers nécessaires existent
-if not os.path.exists(projector_log_dir):
-    st.error(f"Le répertoire {projector_log_dir} n'existe pas. Veuillez vérifier les fichiers TensorBoard.")
-else:
-    # Lancement de TensorBoard si ce n'est pas déjà actif
-    tensorboard_command = f"tensorboard --logdir {projector_log_dir} --host=0.0.0.0 --port=6006"
-    os.system(tensorboard_command)  # Lance TensorBoard sur localhost:6006
+# Prétraitement et tokenisation
+if text.strip():
+    text_seq = tokenizer.texts_to_sequences([text])  # Tokenisation
+    text_padded = pad_sequences(text_seq, maxlen=100, padding='post')  # Padding
 
-    # Interface principale Streamlit
-    st.title("Prediction of Insurance Review Rating")
-    st.write("Enter an insurance review below to predict its rating.")
+    # Prédiction
+    prediction = model.predict(text_padded)
+    predicted_class = np.argmax(prediction)  # Classe prédite
 
-    # Zone de texte pour l'utilisateur
-    text = st.text_area("Review:", "")
+    # Affichage des résultats
+    st.subheader("Prediction")
+    st.write(f"**Predicted Class:** {predicted_class}")
+    st.write(f"**Prediction Probabilities:** {prediction}")
 
-    # Bouton pour la prédiction
-    if st.button("Predict"):
-        if text.strip():
-            st.write(f"Votre texte : {text}")
-            st.write("Prédiction : [à intégrer avec votre modèle]")
-        else:
-            st.write("Veuillez entrer un texte à analyser.")
+    # --- Analyse SHAP ---
+    st.subheader("SHAP Analysis")
 
-    # Affichage de TensorBoard
-    st.subheader("Embedding Visualization via TensorBoard")
-    iframe("http://localhost:6006", height=800, scrolling=True)
+    # Fonction de prédiction adaptée pour SHAP
+    def predict_proba(padded_texts):
+        """
+        Fonction pour générer des prédictions basées sur le modèle.
+        """
+        return model.predict(padded_texts)  # Retourne des probabilités (shape: [n_samples, n_classes])
+
+    # Création de l'explainer SHAP avec KernelExplainer
+    explainer = shap.KernelExplainer(
+        predict_proba,
+        np.zeros((1, text_padded.shape[1]))  # Une séquence de base remplie de zéros
+    )
+
+    # Calcul des valeurs SHAP
+    shap_values = explainer.shap_values(text_padded)
+
+    # Extraction des mots importants (ignorer "<OOV>")
+    sequence_words = [tokenizer.index_word.get(idx, None) for idx in text_seq[0] if idx != 0]
+    shap_importances = shap_values[0][0][:len(sequence_words)]  # Valeurs SHAP pour les mots
+    word_importance_pairs = list(zip(sequence_words, shap_importances))
+
+    # Filtrer pour exclure les mots "None" (correspondant à <OOV>)
+    filtered_pairs = [(word, importance) for word, importance in word_importance_pairs if word is not None]
+
+    # Trie les mots par importance
+    sorted_importance = sorted(filtered_pairs, key=lambda x: abs(x[1]), reverse=True)
+
+    # Afficher les mots les plus importants
+    st.write("**Top words influencing the prediction:**")
+    for word, importance in sorted_importance[:10]:  # Affiche les 10 plus importants
+        st.write(f"- {word}: {importance:.4f}")
+
+    # Préparer les données pour le graphique SHAP
+    words, importances = zip(*filtered_pairs)
+    shap_matrix = np.array([importances])  # Ajouter une dimension pour représenter un seul exemple
+
+    # Visualisation des importances avec SHAP bar_plot
+    plt.figure(figsize=(8, 6))
+    shap.summary_plot(
+        shap_matrix,  # Matrice des valeurs SHAP (1, n_features)
+        feature_names=words,  # Les mots correspondants
+        plot_type="bar",  # Type de graphique : bar
+        show=False
+    )
+    plt.title("SHAP Feature Importance")
+    st.pyplot(plt)  # Intègre le graphique dans Streamlit
+
+    # # Affichage de TensorBoard
+    # st.subheader("Embedding Visualization via TensorBoard")
+    # iframe("http://localhost:6006", height=800, scrolling=True)
