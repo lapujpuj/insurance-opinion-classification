@@ -11,9 +11,9 @@ import nltk
 from spellchecker import SpellChecker
 import json
 import numpy as np
-from streamlit.components.v1 import iframe
+# from streamlit.components.v1 import iframe
 import os
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 # from huggingface_hub import login
 # import os
 
@@ -208,7 +208,7 @@ projector_log_dir = "projector"  # Changez le chemin si nécessaire
 if not text.strip():
     st.warning("Please enter a review to analyze.")
     st.stop()
-    
+
 if text.strip():
     text_seq = tokenizer.texts_to_sequences([text])  # Tokenisation
     text_padded = pad_sequences(text_seq, maxlen=100, padding='post')  # Padding
