@@ -205,6 +205,10 @@ text = st.text_area("Review:", "")
 projector_log_dir = "projector"  # Changez le chemin si nécessaire
 
 # Prétraitement et tokenisation
+if not text.strip():
+    st.warning("Please enter a review to analyze.")
+    st.stop()
+    
 if text.strip():
     text_seq = tokenizer.texts_to_sequences([text])  # Tokenisation
     text_padded = pad_sequences(text_seq, maxlen=100, padding='post')  # Padding
