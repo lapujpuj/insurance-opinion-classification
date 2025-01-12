@@ -3,6 +3,7 @@ import streamlit as st
 # from peft import PeftModel
 # import torch
 import re
+import subprocess
 import shap
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.text import tokenizer_from_json
@@ -201,7 +202,6 @@ text = st.text_area("Review:", "")
 #         st.write("Please enter a review.")
 
 # Répertoire contenant les fichiers TensorBoard
-projector_log_dir = "projector"  # Changez le chemin si nécessaire
 
 if st.button("Predict"):
 
@@ -271,5 +271,14 @@ if st.button("Predict"):
         st.write("Please enter a review.")
 
 # Affichage de TensorBoard
-st.subheader("Embedding Visualization via TensorBoard")
-iframe("http://localhost:6006", height=800, scrolling=True)
+
+projector_log_dir = "projector"
+
+if not os.path.exists(projector_log_dir):
+    st.error(f"The directory '{projector_log_dir}' does not exist. Please check the TensorBoard setup.")
+else:
+    tensorboard_command = f"tensorboard --logdir {projector_log_dir} --host=0.0.0.0 --port=6006"
+    subprocess.Popen(tensorboard_command, shell=True)
+    st.subheader("Embedding Visualization via TensorBoard")
+    iframe("http://localhost:6006", height=800, scrolling=True)
+
