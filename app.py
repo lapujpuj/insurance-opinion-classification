@@ -36,12 +36,12 @@ nltk.download('wordnet', quiet=True)
 nltk.download('omw-1.4', quiet=True)
 
 
-from nltk.corpus import stopwords
+# from nltk.corpus import stopwords
 from nltk.tokenize import TreebankWordTokenizer
 from nltk.stem import WordNetLemmatizer
 
 # --- Preprocessing Components ---
-STOP_WORDS = set(stopwords.words('english'))
+STOP_WORDS = set(nltk.corpusstopwords.words('english'))
 TOKENIZER = TreebankWordTokenizer()
 REGEX = re.compile(r'http\S+|www\S+|https\S+|<[^>]+>')  # To remove URLs and HTML tags
 EMOJI_PATTERN = re.compile("["
