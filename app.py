@@ -291,14 +291,14 @@ if not os.path.exists(projector_log_dir):
 else:
 
     # Lancer TensorBoard
-    tensorboard_command = f"tensorboard --logdir projector --host=0.0.0.0 --port=6006"
+    tensorboard_command = f"tensorboard --logdir projector --host=0.0.0.0 --port=6010"
     subprocess.Popen(tensorboard_command, shell=True)
 
     # Attendre quelques secondes pour que TensorBoard soit prêt
     time.sleep(5)
 
     # Créer un tunnel ngrok pour exposer TensorBoard
-    public_url = ngrok.connect(6006, "http")
+    public_url = ngrok.connect(6010, "http")
     st.success(f"TensorBoard public URL: {public_url}")
 
     # Intégrer TensorBoard dans Streamlit
