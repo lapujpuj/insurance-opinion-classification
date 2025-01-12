@@ -11,6 +11,7 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 import nltk
 from pyngrok import ngrok, conf
 from spellchecker import SpellChecker
+import time
 import json
 import numpy as np
 from streamlit.components.v1 import iframe
@@ -288,12 +289,16 @@ projector_log_dir = "projector"
 if not os.path.exists(projector_log_dir):
     st.error(f"The directory '{projector_log_dir}' does not exist. Please check TensorBoard setup.")
 else:
-    # Lancer TensorBoard en arrière-plan
-    tensorboard_command = f"tensorboard --logdir {projector_log_dir} --host=0.0.0.0 --port=6006"
+
+    # Lancer TensorBoard
+    tensorboard_command = f"tensorboard --logdir projector --host=0.0.0.0 --port=6006"
     subprocess.Popen(tensorboard_command, shell=True)
 
+    # Attendre quelques secondes pour que TensorBoard soit prêt
+    time.sleep(5)
+
     # Créer un tunnel ngrok pour exposer TensorBoard
-    public_url = ngrok.connect(6006, "http")  # Expose le port 6006 via HTTP
+    public_url = ngrok.connect(6006, "http")
     st.success(f"TensorBoard public URL: {public_url}")
 
     # Intégrer TensorBoard dans Streamlit
