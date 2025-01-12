@@ -13,7 +13,7 @@ import json
 import numpy as np
 # from streamlit.components.v1 import iframe
 import os
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 # from huggingface_hub import login
 # import os
 
@@ -248,15 +248,29 @@ if st.button("Predict"):
         # Trie les mots par importance
         sorted_importance = sorted(filtered_pairs, key=lambda x: abs(x[1]), reverse=True)
 
-        # Afficher les mots les plus importants
-        st.write("**Top words influencing the prediction:**")
-        for word, importance in sorted_importance[:10]:  # Affiche les 10 plus importants
-            st.write(f"- {word}: {importance:.4f}")
+        # # Afficher les mots les plus importants
+        # st.write("**Top words influencing the prediction:**")
+        # for word, importance in sorted_importance[:10]:  # Affiche les 10 plus importants
+        #     st.write(f"- {word}: {importance:.4f}")
 
         # Préparer les données pour le graphique SHAP
         words, importances = zip(*filtered_pairs)
         shap_matrix = np.array([importances])  # Ajouter une dimension pour représenter un seul exemple
-    
+
+        # Visualisation des importances avec SHAP bar_plot
+        plt.figure(figsize=(8, 6))
+        shap.summary_plot(
+            shap_matrix,  # Matrice des valeurs SHAP (1, n_features)
+            feature_names=words,  # Les mots correspondants
+            plot_type="bar",  # Type de graphique : bar
+            show=False
+        )
+        plt.title("SHAP Feature Importance")
+        st.pyplot(plt)  # Intègre le graphique dans Streamlit
+            
+
+        
+
     else:
         st.write("Please enter a review.")
 

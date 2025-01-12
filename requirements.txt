@@ -4,4 +4,4 @@ pyspellchecker==0.7.1       # For spell checking
 tensorflow      # For the TensorFlow-based model and tokenizer
 # tensorboard
 shap
-# matplotlib
+matplotlib
