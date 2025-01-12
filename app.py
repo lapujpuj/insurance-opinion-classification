@@ -15,6 +15,7 @@ import numpy as np
 from streamlit.components.v1 import iframe
 import os
 import matplotlib.pyplot as plt
+import random
 # from huggingface_hub import login
 # import os
 
@@ -274,11 +275,15 @@ if st.button("Predict"):
 
 projector_log_dir = "projector"
 
+# Vérifiez si le répertoire existe
 if not os.path.exists(projector_log_dir):
     st.error(f"The directory '{projector_log_dir}' does not exist. Please check the TensorBoard setup.")
 else:
-    tensorboard_command = f"tensorboard --logdir {projector_log_dir} --host=0.0.0.0 --port=6006"
+    # Démarrer TensorBoard sur un port dynamique
+    port = random.randint(6006, 7000)
+    tensorboard_command = f"tensorboard --logdir {projector_log_dir} --host=0.0.0.0 --port={port}"
     subprocess.Popen(tensorboard_command, shell=True)
-    st.subheader("Embedding Visualization via TensorBoard")
-    iframe("http://localhost:6006", height=800, scrolling=True)
 
+    # Affichage dans l'iframe Streamlit
+    st.subheader("Embedding Visualization via TensorBoard")
+    iframe(f"http://localhost:{port}", height=800, scrolling=True)
