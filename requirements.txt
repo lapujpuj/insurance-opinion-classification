@@ -5,3 +5,4 @@ tensorflow      # For the TensorFlow-based model and tokenizer
 tensorboard
 shap
 matplotlib
+pyngrok

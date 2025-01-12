@@ -9,6 +9,7 @@ from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.text import tokenizer_from_json
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 import nltk
+from pyngrok import ngrok
 from spellchecker import SpellChecker
 import json
 import numpy as np
@@ -279,11 +280,14 @@ projector_log_dir = "projector"
 if not os.path.exists(projector_log_dir):
     st.error(f"The directory '{projector_log_dir}' does not exist. Please check the TensorBoard setup.")
 else:
-    # Démarrer TensorBoard sur un port dynamique
-    port = random.randint(6006, 7000)
-    tensorboard_command = f"tensorboard --logdir {projector_log_dir} --host=0.0.0.0 --port={port}"
+    # Démarrer TensorBoard en arrière-plan
+    tensorboard_command = f"tensorboard --logdir {projector_log_dir} --host=0.0.0.0 --port=6006"
     subprocess.Popen(tensorboard_command, shell=True)
 
-    # Affichage dans l'iframe Streamlit
+    # Créer un tunnel ngrok pour exposer TensorBoard
+    public_url = ngrok.connect(6006, "http")
+    st.write(f"TensorBoard public URL: {public_url}")
+
+    # Afficher TensorBoard dans une iframe Streamlit
     st.subheader("Embedding Visualization via TensorBoard")
-    iframe(f"http://localhost:{port}", height=800, scrolling=True)
+    iframe(public_url, height=800, scrolling=True)
