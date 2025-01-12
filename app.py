@@ -302,6 +302,10 @@ else:
     tensorboard_command = f"tensorboard --logdir projector --host=0.0.0.0 --port={free_port}"
     subprocess.Popen(tensorboard_command, shell=True)
 
+    # Attendre quelques secondes pour que TensorBoard soit prêt
+    time.sleep(5)
+
+
     # Expose via ngrok
     public_url = ngrok.connect(free_port, "http")
     st.success(f"TensorBoard public URL: {public_url}")
