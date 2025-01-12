@@ -281,38 +281,38 @@ if st.button("Predict"):
     else:
         st.write("Please enter a review.")
 
-# Affichage de TensorBoard
+# # Affichage de TensorBoard
 
-projector_logdir = os.path.abspath("projector")
+# projector_logdir = os.path.abspath("projector")
 
-ngrok_token = os.getenv("NGROK_TOKEN")
-
-
-# Configurer ngrok avec la clé
-conf.get_default().auth_token = ngrok_token
-
-# Répertoire contenant les fichiers TensorBoard
-projector_log_dir = "projector"
-
-if not os.path.exists(projector_log_dir):
-    st.error(f"The directory '{projector_log_dir}' does not exist. Please check TensorBoard setup.")
-else:
-    # Trouver un port libre
-    free_port = get_free_port()
-    tensorboard_command = f"tensorboard --logdir projector --host=0.0.0.0 --port={free_port}"
-    subprocess.Popen(tensorboard_command, shell=True)
-
-    # Attendre quelques secondes pour que TensorBoard soit prêt
-    time.sleep(5)
+# ngrok_token = os.getenv("NGROK_TOKEN")
 
 
-    # Expose via ngrok
-    public_url = ngrok.connect(free_port, "http", host_header="localhost")
-    st.success(f"TensorBoard public URL: {public_url}")
+# # Configurer ngrok avec la clé
+# conf.get_default().auth_token = ngrok_token
 
-    encoded_url = f"{public_url}?ngrok-skip-browser-warning=true"
+# # Répertoire contenant les fichiers TensorBoard
+# projector_log_dir = "projector"
 
-    # Intégrer dans Streamlit
-    st.subheader("Embedding Visualization via TensorBoard")
-    iframe(encoded_url, height=800, scrolling=True)
+# if not os.path.exists(projector_log_dir):
+#     st.error(f"The directory '{projector_log_dir}' does not exist. Please check TensorBoard setup.")
+# else:
+#     # Trouver un port libre
+#     free_port = get_free_port()
+#     tensorboard_command = f"tensorboard --logdir projector --host=0.0.0.0 --port={free_port}"
+#     subprocess.Popen(tensorboard_command, shell=True)
+
+#     # Attendre quelques secondes pour que TensorBoard soit prêt
+#     time.sleep(5)
+
+
+#     # Expose via ngrok
+#     public_url = ngrok.connect(free_port, "http", host_header="localhost")
+#     st.success(f"TensorBoard public URL: {public_url}")
+
+#     encoded_url = f"{public_url}?ngrok-skip-browser-warning=true"
+
+#     # Intégrer dans Streamlit
+#     st.subheader("Embedding Visualization via TensorBoard")
+#     iframe(encoded_url, height=800, scrolling=True)
 
