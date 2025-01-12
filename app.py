@@ -283,7 +283,7 @@ if st.button("Predict"):
 
 # Affichage de TensorBoard
 
-projector_log_dir = "projector"
+projector_logdir = os.path.abspath("projector")
 
 ngrok_token = os.getenv("NGROK_TOKEN")
 
