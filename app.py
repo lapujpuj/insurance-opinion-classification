@@ -18,6 +18,7 @@ from streamlit.components.v1 import iframe
 import os
 import matplotlib.pyplot as plt
 import random
+import socket
 # from huggingface_hub import login
 # import os
 
@@ -150,6 +151,13 @@ def clean_and_tokenize(text):
 
 # model, tokenizer = load_model()
 
+def get_free_port():
+    """
+    Trouve un port libre à utiliser.
+    """
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(("", 0))
+        return s.getsockname()[1]
 
 @st.cache_resource
 def load_model_and_tokenizer():
@@ -289,18 +297,16 @@ projector_log_dir = "projector"
 if not os.path.exists(projector_log_dir):
     st.error(f"The directory '{projector_log_dir}' does not exist. Please check TensorBoard setup.")
 else:
-
-    # Lancer TensorBoard
-    tensorboard_command = f"tensorboard --logdir projector --host=0.0.0.0 --port=6010"
+    # Trouver un port libre
+    free_port = get_free_port()
+    tensorboard_command = f"tensorboard --logdir projector --host=0.0.0.0 --port={free_port}"
     subprocess.Popen(tensorboard_command, shell=True)
 
-    # Attendre quelques secondes pour que TensorBoard soit prêt
-    time.sleep(5)
-
-    # Créer un tunnel ngrok pour exposer TensorBoard
-    public_url = ngrok.connect(6010, "http")
+    # Expose via ngrok
+    public_url = ngrok.connect(free_port, "http")
     st.success(f"TensorBoard public URL: {public_url}")
 
-    # Intégrer TensorBoard dans Streamlit
+    # Intégrer dans Streamlit
     st.subheader("Embedding Visualization via TensorBoard")
     iframe(public_url, height=800, scrolling=True)
+
