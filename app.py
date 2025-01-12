@@ -307,10 +307,12 @@ else:
 
 
     # Expose via ngrok
-    public_url = ngrok.connect(free_port, "http")
+    public_url = ngrok.connect(free_port, "http", host_header="localhost")
     st.success(f"TensorBoard public URL: {public_url}")
+
+    encoded_url = f"{public_url}?ngrok-skip-browser-warning=true"
 
     # Intégrer dans Streamlit
     st.subheader("Embedding Visualization via TensorBoard")
-    iframe(public_url, height=800, scrolling=True)
+    iframe(encoded_url, height=800, scrolling=True)
 
